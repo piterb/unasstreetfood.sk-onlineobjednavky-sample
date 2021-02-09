@@ -1,0 +1,113 @@
+service: donaska-product
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: "=1.67.0"
+custom: ${file(../../../serverless.yml):custom}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  timeout: 30
+  versionFunctions: false
+  region: eu-central-1
+  role:
+    Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-IamRoleLambdaExecution
+  apiGateway:
+    restApiId:
+      Fn::ImportValue: "${self:custom.rootServiceName}-${self:custom.stage}-RestApiId"
+    restApiRootResourceId:
+      Fn::ImportValue: "${self:custom.rootServiceName}-${self:custom.stage}-RootResourceId"
+    restApiResources:
+      admin:
+        Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayResourceAdmin
+  environment: ${file(../../../serverless.yml):provider.environment}
+
+#plugins:
+#  - serverless-webpack
+# you can add packaging information here
+package:
+  include:
+    - ../../../node_modules/**
+    - ../../../config/**
+    - ../../../lib/**
+    - ../../../models/**
+    - ../../../services/src/product/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+functions:
+  adminCategoriesCreate:
+    handler: services/src/product/admin/categories.create
+    events:
+      - http:
+          path: /admin/categories
+          method: post
+          cors: true
+          authorizer:
+            type: CUSTOM
+            authorizerId:
+              Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayGeneralAuthorizerId
+  adminCategoriesRead:
+    handler: services/src/product/admin/categories.read
+    events:
+      - http:
+          path: /admin/categories
+          method: get
+          cors: true
+          authorizer:
+            type: CUSTOM
+            authorizerId:
+              Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayGeneralAuthorizerId
+  adminCategoriesUpdate:
+    handler: services/src/product/admin/categories.update
+    events:
+      - http:
+          path: /admin/categories/{id}
+          method: put
+          cors: true
+          authorizer:
+            type: CUSTOM
+            authorizerId:
+              Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayGeneralAuthorizerId
+          request:
+            parameters:
+              paths:
+                id: true
+  adminCategoriesDelete:
+    handler: services/src/product/admin/categories.delete
+    events:
+      - http:
+          path: /admin/categories/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: CUSTOM
+            authorizerId:
+              Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayGeneralAuthorizerId
+          request:
+            parameters:
+              paths:
+                id: true
+  adminCategoriesMove:
+    handler: services/src/product/admin/categories.move
+    events:
+      - http:
+          path: /admin/categories/move
+          method: post
+          cors: true
+          authorizer:
+            type: CUSTOM
+            authorizerId:
+              Fn::ImportValue: ${self:custom.rootServiceName}-${self:custom.stage}-ApiGatewayGeneralAuthorizerId
+  categoriesRead:
+    handler: services/src/product/categories.read
+    events:
+      - http:
+          path: /categories
+          method: get
+          cors: true
